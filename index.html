@@ -916,6 +916,32 @@ function countTweetLength(text) {
   return { count, urlCount };
 }
 
+// 疑似短縮URL生成用
+const SHORT_URL_HOST = 'https://x.gd/';
+const shortIdChars = '123456789ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz'; 
+// ↑ 0 / O / o など紛らわしい文字を除外
+
+// ランダム6文字IDを生成
+function randomShortId(len = 6) {
+  let out = '';
+  const charsLen = shortIdChars.length;
+  for (let i = 0; i < len; i++) {
+    out += shortIdChars[Math.floor(Math.random() * charsLen)];
+  }
+  return out;
+}
+
+// 元URL→疑似短縮URL の対応表（プレビュー中で安定させるため）
+const urlShortMap = new Map();
+
+function getShortUrl(url) {
+  if (!urlShortMap.has(url)) {
+    urlShortMap.set(url, SHORT_URL_HOST + randomShortId(6));
+  }
+  return urlShortMap.get(url);
+}
+
+
 
     function renderPreview(text) {
       if (!text) {
@@ -935,8 +961,9 @@ function countTweetLength(text) {
 
         if (match[1]) {
           const url = match[1];
-          const safeUrl = escapeHtml(url);
-          result += `<a href="${safeUrl}" class="tweet-link" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`;
+  const safeUrl = escapeHtml(url);              // リンク先は元のURL
+  const shortUrl = escapeHtml(getShortUrl(url)); // 表示は疑似短縮URL
+  result += `<a href="${safeUrl}" class="tweet-link" target="_blank" rel="noopener noreferrer">${shortUrl}</a>`;
         } else if (match[2]) {
           result += `<span class="hashtag">${escapeHtml(match[2])}</span>`;
         } else if (match[3]) {
