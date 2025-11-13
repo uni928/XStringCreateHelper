@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>X用 文字数カウンター（無料ユーザー280文字＋短縮URL換算）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #020617;
+      --card-bg: #0b1220;
+      --card-border: rgba(148, 163, 184, 0.4);
+      --accent: #1d9bf0;
+      --accent-soft: rgba(29, 155, 240, 0.15);
+      --accent-strong: rgba(29, 155, 240, 0.35);
+      --danger: #f97373;
+      --warning: #fb923c;
+      --text-main: #e5e7eb;
+      --text-sub: #9ca3af;
+      --radius-lg: 24px;
+      --shadow-card: 0 22px 45px rgba(15, 23, 42, 0.75);
+      --limit: 280;
+      --url-weight: 23;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, #1d283a 0, transparent 55%),
+        radial-gradient(circle at bottom right, #020617 0, #020617 45%, #000 100%);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 960px;
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.08), transparent 60%),
+                  radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-card);
+      padding: 20px 20px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .app-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-pill {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-sub);
+    }
+
+    .subtitle {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .x-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      backdrop-filter: blur(14px);
+    }
+
+    .x-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background:
+        linear-gradient(135deg, #f9fafb 0 45%, #020617 55% 100%),
+        #020617;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .x-icon::before,
+    .x-icon::after {
+      content: "";
+      position: absolute;
+      inset: 50% 18%;
+      border-radius: 999px;
+      border: 1.7px solid #020617;
+      transform-origin: center;
+    }
+
+    .x-icon::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .x-icon::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    main.layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 800px) {
+      main.layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      background: linear-gradient(145deg, #020617 0, #020617 30%, #020617 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(15, 118, 230, 0.16), transparent 60%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .section-label-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 170px;
+      max-height: 50vh;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.98));
+      color: var(--text-main);
+      padding: 12px 13px 12px;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+      caret-color: var(--accent);
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+    }
+
+    textarea:focus-visible {
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(56, 189, 248, 0.35),
+        0 14px 38px rgba(15, 23, 42, 0.6);
+      transform: translateY(-1px);
+    }
+
+    textarea::placeholder {
+      color: rgba(148, 163, 184, 0.75);
+    }
+
+    .inline-hint {
+      position: absolute;
+      right: 12px;
+      bottom: 9px;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      pointer-events: none;
+      background: linear-gradient(to right, transparent 0, #020617dd 36%, #020617ff 75%);
+      padding-left: 28px;
+      padding-right: 4px;
+      border-radius: 999px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+      justify-content: space-between;
+    }
+
+    .hashtag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      padding: 3px 9px;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      background: rgba(15, 23, 42, 0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease, background 0.1s ease;
+      white-space: nowrap;
+    }
+
+    .chip::before {
+      content: "#";
+      color: rgba(96, 165, 250, 0.9);
+      font-weight: 600;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      background: rgba(15, 23, 42, 0.95);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+      transform: translateY(-0.5px);
+    }
+
+    .chip:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+      margin-left: auto;
+    }
+
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 6px 10px;
+      font-size: 0.74rem;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease, background 0.1s ease;
+      font-family: inherit;
+    }
+
+    button span.icon {
+      font-size: 0.85em;
+    }
+
+    button.primary {
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.9), var(--accent));
+      border-color: rgba(191, 219, 254, 0.9);
+      color: #0b1120;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      box-shadow: 0 10px 26px rgba(59, 130, 246, 0.7);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.7);
+      border-color: rgba(148, 163, 184, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    button.primary:hover {
+      background: radial-gradient(circle at top left, rgba(191, 219, 254, 0.95), var(--accent));
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.9);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .counter-area {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(30, 64, 175, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .counter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(30, 41, 59, 0.95);
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.8);
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.05), var(--accent));
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.9);
+      transition: width 0.18s ease-out, background-color 0.18s ease-out, box-shadow 0.18s ease-out;
+    }
+
+    .counter-text {
+      min-width: 115px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.76rem;
+      color: var(--text-sub);
+    }
+
+    .counter-text .current {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .counter-text .limit {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    .counter-text .remaining {
+      margin-left: 4px;
+      opacity: 0.85;
+    }
+
+    .counter-text.danger .current,
+    .counter-text.danger .remaining {
+      color: var(--danger);
+    }
+
+    .counter-text.warning .current,
+    .counter-text.warning .remaining {
+      color: var(--warning);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .info-row span {
+      white-space: nowrap;
+    }
+
+    .info-row .hint {
+      opacity: 0.9;
+    }
+
+    .info-row .url-info {
+      opacity: 0.9;
+      text-align: right;
+    }
+
+    /* Preview side */
+
+    .preview-card {
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.96));
+      border-radius: 20px;
+      border: 1px solid rgba(51, 65, 85, 0.95);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-card::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .preview-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .tweet-shell {
+      border-radius: 18px;
+      border: 1px solid rgba(30, 41, 59, 0.85);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), #020617);
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background:
+        conic-gradient(from 170deg, rgba(56, 189, 248, 1), rgba(129, 140, 248, 1), rgba(236, 72, 153, 1), rgba(56, 189, 248, 1));
+      padding: 2px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: radial-gradient(circle at 30% 0, #e5e7eb 0, #94a3b8 20%, #020617 80%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #020617;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .tweet-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .tweet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .name-line {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .display-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .handle {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    .preview-badge {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: rgba(148, 163, 184, 0.95);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .preview-badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 1);
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.9);
+    }
+
+    .tweet-text {
+      margin-top: 6px;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .tweet-text .placeholder {
+      color: rgba(148, 163, 184, 0.9);
+      font-size: 0.8rem;
+    }
+
+    .tweet-text .hashtag {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .tweet-text .mention {
+      color: rgba(129, 140, 248, 1);
+      font-weight: 500;
+    }
+
+    .tweet-text a.tweet-link {
+      color: rgba(56, 189, 248, 1);
+      text-decoration: underline;
+      text-decoration-color: rgba(56, 189, 248, 0.6);
+      text-underline-offset: 2px;
+      font-weight: 400;
+    }
+
+    .tweet-footer {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-sub);
+      font-size: 0.7rem;
+    }
+
+    .tweet-footer-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot-divider {
+      width: 3px;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.7);
+    }
+
+    .tweet-footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-pill {
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 1);
+      font-size: 0.65rem;
+      color: rgba(148, 163, 184, 0.95);
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    .note strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .note ul {
+      margin: 6px 0 0 1.1em;
+      padding: 0;
+    }
+
+    .note li {
+      margin-bottom: 2px;
+    }
+
+    /* Toast */
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      max-width: min(280px, 100vw - 32px);
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.75rem;
+      color: var(--text-main);
+      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+      z-index: 999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 1);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 1);
+      flex-shrink: 0;
+    }
+
+    .toast-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        padding: 16px 14px 12px;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .button-row {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .tweet-shell {
+        padding: 9px 9px 9px;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="app-inner">
+    <header>
+      <div class="title-block">
+        <div class="title">
+          X用 下書きエディタ
+          <span class="title-pill">Free · 280 chars · URL=23</span>
+        </div>
+        <div class="subtitle">
+          X 無料ユーザーの投稿文字数に合わせた下書き・文字数カウントツールです。
+        </div>
+      </div>
+      <div class="x-badge" aria-hidden="true">
+        <div class="x-icon"></div>
+        <span>280文字＋短縮URL換算</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- Editor side -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="section-label">
+            <span class="section-label-dot"></span>
+            <span>Draft · 編集エリア</span>
+          </div>
+
+          <div class="textarea-wrapper">
+            <textarea id="tweetInput" placeholder="Xに投稿する文章をここに入力 / 貼り付けしてください。&#10;URLは自動的に23文字としてカウントされます。"></textarea>
+            <div class="inline-hint">
+              ハッシュタグは青色でプレビュー
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="hashtag-chips" aria-label="よく使うハッシュタグ">
+              <div class="chip" data-tag="#今日の積み上げ">今日の積み上げ</div>
+              <div class="chip" data-tag="#ポジティブ">ポジティブ</div>
+              <div class="chip" data-tag="#学び">学び</div>
+            </div>
+            <div class="button-row">
+              <button type="button" id="addHashtagBtn">
+                <span class="icon">#</span>
+                ハッシュタグ行を追加
+              </button>
+              <button type="button" id="clearBtn">
+                <span class="icon">🧹</span>
+                クリア
+              </button>
+              <button type="button" id="copyBtn" class="primary">
+                <span class="icon">📋</span>
+                テキストをコピー
+              </button>
+            </div>
+          </div>
+
+          <div class="counter-area">
+            <div class="counter-row">
+              <div class="progress-bar">
+                <div class="progress-bar-inner" id="progressBar"></div>
+              </div>
+              <div class="counter-text" id="counterText">
+                <span class="current">0</span>
+                <span class="limit">/ 280</span>
+                <span class="remaining">（残り 280）</span>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="hint">
+                280文字を超える入力（貼り付け含む）は自動で元に戻します。
+              </span>
+              <span class="url-info" id="urlInfo">
+                URLなし（URLは1本あたり23文字としてカウント）
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Preview side -->
+      <section class="preview-card">
+        <div class="preview-inner">
+          <div class="section-label">
+            <span class="section-label-dot"></span>
+            <span>Preview · X風表示</span>
+          </div>
+          <div class="tweet-shell" aria-label="X風プレビュー">
+            <div class="avatar">
+              <div class="avatar-inner">X</div>
+            </div>
+            <div class="tweet-meta">
+              <div class="tweet-header">
+                <div class="name-line">
+                  <div class="display-name">あなたのアカウント名</div>
+                  <div class="handle">@your_handle</div>
+                </div>
+                <div class="preview-badge">
+                  <span class="preview-badge-dot"></span>
+                  <span>Preview Only</span>
+                </div>
+              </div>
+              <div class="tweet-text" id="tweetPreview">
+                <span class="placeholder">ここにX投稿のプレビューが表示されます。ハッシュタグは青文字、@メンションやURLもX風に色分けされます。</span>
+              </div>
+              <div class="tweet-footer">
+                <div class="tweet-footer-left">
+                  <span>いま</span>
+                  <span class="dot-divider"></span>
+                  <span>Webクライアント</span>
+                </div>
+                <div class="tweet-footer-right">
+                  <span class="mini-pill">#が青色表示</span>
+                  <span class="mini-pill">@メンションも強調</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="note">
+            <strong>Tips</strong>
+            <ul>
+              <li>URLは1本あたり <strong>23文字固定</strong> としてカウントしています。</li>
+              <li>ハッシュタグ（#タグ）はプレビューで <strong>青文字</strong> 表示されます。</li>
+              <li>本文が280文字に届くと、それ以上の入力・貼り付けは自動的にカットされます。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast" aria-live="polite">
+  <div class="toast-dot"></div>
+  <div class="toast-text"></div>
+</div>
+
+<script>
+  (function () {
+    const LIMIT = 280;           // X 無料ユーザーの投稿上限
+    const URL_WEIGHT = 23;       // t.co 短縮URL換算の文字数
+
+    const textarea = document.getElementById('tweetInput');
+    const preview = document.getElementById('tweetPreview');
+    const progressBar = document.getElementById('progressBar');
+    const counterText = document.getElementById('counterText');
+    const urlInfo = document.getElementById('urlInfo');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const addHashtagBtn = document.getElementById('addHashtagBtn');
+    const chips = document.querySelectorAll('.chip');
+    const toastEl = document.getElementById('toast');
+    const toastTextEl = toastEl.querySelector('.toast-text');
+
+// （既存の urlRegex 定義のすぐ下あたりに追加）
+
+// 全角っぽい文字をざっくり 2 カウント扱いするための正規表現
+// ・全角スペース・句読点など    \u3000-\u303F
+// ・ひらがな                     \u3040-\u309F
+// ・カタカナ                     \u30A0-\u30FF
+// ・全角記号・全角英数字         \uFF00-\uFFEF
+// ・CJK漢字                       \u4E00-\u9FFF
+const fullWidthRegex = /[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FFF]/;
+
+    let lastValidValue = '';
+
+    const urlRegex = /(https?:\/\/[^\s]+)/gi;
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+function countTweetLength(text) {
+  const codepoints = Array.from(text);
+  let count = 0;
+
+  // 1文字ずつ重み付け（全角=2 / 半角=1）
+  for (const ch of codepoints) {
+    if (fullWidthRegex.test(ch)) {
+      count += 2;   // 全角とみなしたものは2カウント
+    } else {
+      count += 1;   // それ以外は1カウント
+    }
+  }
+
+  const urls = text.match(urlRegex);
+  let urlCount = 0;
+
+  if (urls) {
+    urls.forEach(url => {
+      // URL は「実際の長さ」ではなく 23 文字固定に補正
+      const urlLen = Array.from(url).length;
+      count += URL_WEIGHT - urlLen;
+    });
+    urlCount = urls.length;
+  }
+
+  return { count, urlCount };
+}
+
+
+    function renderPreview(text) {
+      if (!text) {
+        preview.innerHTML = '<span class="placeholder">ここにX投稿のプレビューが表示されます。ハッシュタグは青文字、@メンションやURLもX風に色分けされます。</span>';
+        return;
+      }
+
+      const regex = /(https?:\/\/[^\s]+)|(#[\p{L}0-9_]+)|(@[A-Za-z0-9_]{1,15})|\n/gu;
+      let result = '';
+      let lastIndex = 0;
+      let match;
+
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          result += escapeHtml(text.slice(lastIndex, match.index));
+        }
+
+        if (match[1]) {
+          const url = match[1];
+          const safeUrl = escapeHtml(url);
+          result += `<a href="${safeUrl}" class="tweet-link" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`;
+        } else if (match[2]) {
+          result += `<span class="hashtag">${escapeHtml(match[2])}</span>`;
+        } else if (match[3]) {
+          result += `<span class="mention">${escapeHtml(match[3])}</span>`;
+        } else {
+          result += '<br>';
+        }
+
+        lastIndex = regex.lastIndex;
+      }
+
+      if (lastIndex < text.length) {
+        result += escapeHtml(text.slice(lastIndex));
+      }
+
+      preview.innerHTML = result;
+    }
+
+    function updateUI() {
+      const text = textarea.value;
+      const { count, urlCount } = countTweetLength(text);
+
+      const current = count;
+      const remaining = Math.max(0, LIMIT - current);
+      const percent = (current / LIMIT) * 100;
+
+      progressBar.style.width = Math.min(percent, 100) + '%';
+
+      let barColor = 'linear-gradient(90deg, rgba(56, 189, 248, 0.05), #1d9bf0)';
+      let boxShadow = '0 0 12px rgba(59, 130, 246, 0.9)';
+      let counterClass = 'counter-text';
+
+      if (remaining <= 20 && remaining > 0) {
+        barColor = 'linear-gradient(90deg, rgba(249, 115, 22, 0.2), #fb923c)';
+        boxShadow = '0 0 12px rgba(249, 115, 22, 0.9)';
+        counterClass += ' warning';
+      } else if (remaining === 0) {
+        barColor = 'linear-gradient(90deg, rgba(248, 113, 113, 0.2), #f97373)';
+        boxShadow = '0 0 12px rgba(248, 113, 113, 0.9)';
+        counterClass += ' danger';
+      }
+
+      progressBar.style.backgroundImage = barColor;
+      progressBar.style.boxShadow = boxShadow;
+      counterText.className = counterClass;
+
+      counterText.innerHTML =
+        `<span class="current">${current}</span>` +
+        `<span class="limit">/ ${LIMIT}</span>` +
+        `<span class="remaining">（残り ${remaining}）</span>`;
+
+      if (urlCount > 0) {
+        urlInfo.textContent = `URL ${urlCount}件（1件=23文字としてカウント）`;
+      } else {
+        urlInfo.textContent = 'URLなし（URLは1本あたり23文字としてカウント）';
+      }
+
+      renderPreview(text);
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+      toastTextEl.textContent = message;
+      toastEl.classList.add('show');
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+      }
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2000);
+    }
+
+    function flashLimitMessage() {
+      showToast('280文字を超えるため、これ以上入力・貼り付けできません。');
+    }
+
+    textarea.addEventListener('input', () => {
+      const value = textarea.value;
+      const { count } = countTweetLength(value);
+
+      if (count > LIMIT) {
+        textarea.value = lastValidValue;
+        flashLimitMessage();
+      } else {
+        lastValidValue = value;
+      }
+
+      updateUI();
+    });
+
+    function trySetText(newText) {
+      const { count } = countTweetLength(newText);
+      if (count > LIMIT) {
+        flashLimitMessage();
+        return false;
+      }
+      textarea.value = newText;
+      lastValidValue = newText;
+      updateUI();
+      return true;
+    }
+
+    function insertAtCursor(insertText) {
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      const current = textarea.value;
+      const newText = current.slice(0, start) + insertText + current.slice(end);
+
+      if (trySetText(newText)) {
+        const pos = start + insertText.length;
+        textarea.focus();
+        textarea.setSelectionRange(pos, pos);
+      }
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      const text = textarea.value;
+      if (!text) {
+        showToast('コピーするテキストがありません。');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('テキストをコピーしました。');
+      } catch (e) {
+        showToast('クリップボードへのコピーに失敗しました。');
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (!textarea.value) return;
+      textarea.value = '';
+      lastValidValue = '';
+      updateUI();
+      showToast('入力内容をクリアしました。');
+    });
+
+    addHashtagBtn.addEventListener('click', () => {
+      const base = textarea.value.trimEnd();
+      const prefix = base ? '\n\n' : '';
+      insertAtCursor(prefix + '#');
+    });
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const tag = chip.getAttribute('data-tag');
+        const base = textarea.value;
+        const needsSpace = base && !/\s$/.test(base);
+        const prefix = needsSpace ? ' ' : (base ? '\n' : '');
+        insertAtCursor(prefix + tag);
+      });
+    });
+
+    // 初期表示更新
+    updateUI();
+  })();
+</script>
+</body>
+</html>
