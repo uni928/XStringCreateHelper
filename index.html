@@ -759,7 +759,7 @@
             <div class="button-row">
               <button type="button" id="addHashtagBtn">
                 <span class="icon">#</span>
-                ハッシュタグ行を追加
+                ハッシュタグ # を追加
               </button>
               <button type="button" id="clearBtn">
                 <span class="icon">🧹</span>
@@ -1078,11 +1078,19 @@ function countTweetLength(text) {
       showToast('入力内容をクリアしました。');
     });
 
-    addHashtagBtn.addEventListener('click', () => {
-      const base = textarea.value.trimEnd();
-      const prefix = base ? '\n\n' : '';
-      insertAtCursor(prefix + '#');
-    });
+addHashtagBtn.addEventListener('click', () => {
+  const start = textarea.selectionStart ?? 0;
+  const text = textarea.value;
+
+  // カーソル直前の文字
+  const prevChar = start > 0 ? text[start - 1] : '';
+
+  // 追加すべきテキスト（先頭 or 直前がスペースでないなら半角スペースを補う）
+  const insertText = (prevChar && prevChar !== ' ' && prevChar !== '\n') ? ' #' : '#';
+
+  insertAtCursor(insertText);
+});
+
 
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -1100,4 +1108,5 @@ function countTweetLength(text) {
 </script>
 </body>
 </html>
+
 
