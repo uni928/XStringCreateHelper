@@ -722,7 +722,7 @@
       <div class="title-block">
         <div class="title">
           X用 下書きエディタ
-          <span class="title-pill">Free · 280 chars · URL=23</span>
+          <span class="title-pill">Free · 280 chars · URL=24</span>
         </div>
         <div class="subtitle">
           X 無料ユーザーの投稿文字数に合わせた下書き・文字数カウントツールです。
@@ -744,7 +744,7 @@
           </div>
 
           <div class="textarea-wrapper">
-            <textarea id="tweetInput" placeholder="Xに投稿する文章をここに入力 / 貼り付けしてください。&#10;URLは自動的に23文字としてカウントされます。"></textarea>
+            <textarea id="tweetInput" placeholder="Xに投稿する文章をここに入力 / 貼り付けしてください。&#10;URLは自動的に24文字としてカウントされます。(最近短縮 URL の文字数が 1 文字増えたため 23 文字の所を 24 文字にしています。)"></textarea>
             <div class="inline-hint">
               ハッシュタグは青色でプレビュー
             </div>
@@ -788,7 +788,7 @@
                 280文字を超える入力（貼り付け含む）は自動で元に戻します。
               </span>
               <span class="url-info" id="urlInfo">
-                URLなし（URLは1本あたり23文字としてカウント）
+                URLなし（URLは1本あたり24文字としてカウント）
               </span>
             </div>
           </div>
@@ -836,7 +836,7 @@
           <div class="note">
             <strong>Tips</strong>
             <ul>
-              <li>URLは1本あたり <strong>23文字固定</strong> としてカウントしています。</li>
+              <li>URLは1本あたり <strong>24文字固定</strong> としてカウントしています。</li>
               <li>ハッシュタグ（#タグ）はプレビューで <strong>青文字</strong> 表示されます。</li>
               <li>本文が280文字に届くと、それ以上の入力・貼り付けは自動的にカットされます。</li>
             </ul>
@@ -855,7 +855,7 @@
 <script>
   (function () {
     const LIMIT = 280;           // X 無料ユーザーの投稿上限
-    const URL_WEIGHT = 23;       // t.co 短縮URL換算の文字数
+    const URL_WEIGHT = 24;       // t.co 短縮URL換算の文字数
 
     const textarea = document.getElementById('tweetInput');
     const preview = document.getElementById('tweetPreview');
@@ -910,7 +910,7 @@ function countTweetLength(text) {
 
   if (urls) {
     urls.forEach(url => {
-      // URL は「実際の長さ」ではなく 23 文字固定に補正
+      // URL は「実際の長さ」ではなく 24 文字固定に補正
       const urlLen = Array.from(url).length;
       count += URL_WEIGHT - urlLen;
     });
@@ -993,9 +993,9 @@ function countTweetLength(text) {
         `<span class="remaining">（残り ${remaining}）</span>`;
 
       if (urlCount > 0) {
-        urlInfo.textContent = `URL ${urlCount}件（1件=23文字としてカウント）`;
+        urlInfo.textContent = `URL ${urlCount}件（1件=24文字としてカウント）`;
       } else {
-        urlInfo.textContent = 'URLなし（URLは1本あたり23文字としてカウント）';
+        urlInfo.textContent = 'URLなし（URLは1本あたり24文字としてカウント）';
       }
 
       renderPreview(text);
@@ -1100,3 +1100,4 @@ function countTweetLength(text) {
 </script>
 </body>
 </html>
+
